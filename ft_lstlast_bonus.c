@@ -6,7 +6,7 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/26 15:43:26 by shima             #+#    #+#             */
-/*   Updated: 2022/05/04 06:55:20 by shima            ###   ########.fr       */
+/*   Updated: 2022/05/04 07:42:40 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ t_list	*ft_lstlast(t_list *lst)
 	while (lst)
 	{
 		if (!(lst->next))
-			break;
+			break ;
 		lst = lst->next;
 	}
 	return (lst);
