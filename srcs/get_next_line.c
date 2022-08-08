@@ -6,11 +6,11 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/03 10:31:51 by shima             #+#    #+#             */
-/*   Updated: 2022/06/13 12:37:58 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/08 10:54:46 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "so_long.h"
 
 static bool	save_str(char *buf, char **save);
 static void	create_line(char *buf, char **line, char **save);
