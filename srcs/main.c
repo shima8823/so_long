@@ -6,52 +6,11 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/31 10:14:51 by shima             #+#    #+#             */
-/*   Updated: 2022/08/08 11:55:57 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/08 15:29:38 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/so_long.h"
-
-# define PLAYER "assets/textures/player.xpm"
-# define FLOOR "assets/textures/floor.xpm"
-# define WALL "assets/textures/wall.xpm"
-# define GOAL "assets/textures/goal.xpm"
-# define ITEM "assets/textures/item.xpm"
-
-# define KEY_ESC 65307
-# define KEY_W 119
-# define KEY_A 97
-# define KEY_S 115
-# define KEY_D 100
-
-# define DESTROY_NOTIFY 17
-
-typedef struct	s_data {
-	void	*img;
-	char	*addr;
-	int		bits_per_pixel;
-	int		line_length;
-	int		endian;
-	int		width;
-	int		height;
-}	t_img_data;
-
-typedef struct	s_game_info {
-	void			*mlx_ptr;
-	void			*win_ptr;
-	char			*map;
-	int				map_x;
-	int				map_y;
-	unsigned int	item_max;
-	unsigned int	move_count;
-	unsigned int	item_count;
-	size_t			player_i;
-	t_img_data floor;
-	t_img_data player;
-	t_img_data goal;
-	t_img_data wall;
-	t_img_data item;
-}	t_game_info;
 
 char	*read_file(char *map_path);
 void	when_error(char *error_func_name);
@@ -63,28 +22,27 @@ void	check_map(char *map);
 void	map_error();
 void	check_char(char c);
 void	correct_char_num(char *map);
-
+void	is_valid_filename(char *map_path);
 
 // event
 void	event_register(t_game_info *game_info);
 int		key_hook(int keycode, t_game_info *param);
 void	player_move(t_game_info *game_info, size_t other_i);
-
 int 	loop_hook(t_game_info *param);
-
 
 int	main(int argc, char *argv[])
 {
 	t_game_info	game_info;
 	
 	if (argc != 2)
-		exit(EXIT_SUCCESS);
+		exit(EXIT_FAILURE);
 	errno = 0;
 	ft_bzero(&game_info, sizeof(game_info));
 	init_map(argv[1], &game_info);
 	event_register(&game_info);
 	mlx_loop(game_info.mlx_ptr);
 	free(game_info.map);
+	return (EXIT_SUCCESS);
 }
 
 char	*read_file(char *map_path)
@@ -94,24 +52,23 @@ char	*read_file(char *map_path)
 	char	*tmp;
 	int		nl_count;
 	size_t	row_len;
+	size_t	i;
 	char	*gnl_ret;
+	bool	is_first;
+	bool	is_nl;
 
-	result = malloc(1);
+	result = malloc(1 * sizeof(char));
 	result[0] = '\0';
 	nl_count = 0;
+	i = 0;
+	is_first = true;
+	is_nl = true;
+	row_len = 0;
 	
 	fd = open(map_path, O_RDONLY);
 	if (fd == -1)
 		when_error("open");
 
-	result = get_next_line(fd);
-	if (!result)
-		map_error("Nothing in the file.\n");
-	if (ft_strchr(result, '\n'))
-	{
-		nl_count++;
-		row_len = ft_strlen(result) - 1;
-	}
 	while (true)
 	{
 		gnl_ret = get_next_line(fd);
@@ -120,12 +77,37 @@ char	*read_file(char *map_path)
 		if (ft_strchr(gnl_ret, '\n'))
 		{
 			nl_count++;
+			if (is_first)
+			{
+				while (gnl_ret[i] != '\n')
+				{
+					if (gnl_ret[i] != '1')
+						map_error("The map must be closed by walls.124\n");
+					i++;
+				}
+				row_len = i;
+				is_first = false;
+			}
+			// printf("%zu", row_len);
 			if (row_len != ft_strlen(gnl_ret) - 1)
-				map_error("map is not rectangular.\n");
+				map_error("map is not rectangular.132\n");
+			if (gnl_ret[0] != '1' || gnl_ret[ft_strlen(gnl_ret) - 2] != '1')
+				map_error("The map must be closed by walls.135\n");
 		}
-		else 
+		else
+		{
+			// ft_printf("%s, %d\n", __FILE__, __LINE__);
+			i = 0;
+			while (gnl_ret[i])
+			{
+				if (gnl_ret[i] != '1')
+					map_error("The map must be closed by walls.\n");
+				i++;
+			}
 			if (row_len != ft_strlen(gnl_ret))
-				map_error("map is not rectangular.\n");
+				map_error("map is not rectangular.146\n");
+			is_nl = false;
+		}
 		tmp = result;
 		result = ft_strjoin(result, gnl_ret);
 		if (result == NULL)
@@ -134,6 +116,8 @@ char	*read_file(char *map_path)
 		free(gnl_ret);
 	}
 	close(fd);
+	if (is_nl)
+		map_error("nl\n");
 	if (nl_count < 2)
 		map_error("map has no more than 3 lines.\n");
 	return (result);
@@ -141,25 +125,20 @@ char	*read_file(char *map_path)
 
 void	init_map(char *map_path, t_game_info *game_info)
 {
+	is_valid_filename(map_path);
 	game_info->map = read_file(map_path);
-	ft_printf("%s", game_info->map);
-	check_map(game_info->map);
+	// ft_printf("%s", game_info->map);
+	correct_char_num(game_info->map);
 	get_map_info(game_info);
 	
 	game_info->mlx_ptr = mlx_init();
 	game_info->win_ptr = mlx_new_window(game_info->mlx_ptr, game_info->map_x * 50, game_info->map_y * 50, "so_long");
-
 	game_info->floor.img = mlx_xpm_file_to_image(game_info->mlx_ptr, FLOOR, &game_info->floor.width, &game_info->floor.height);
 	game_info->player.img = mlx_xpm_file_to_image(game_info->mlx_ptr, PLAYER, &game_info->player.width, &game_info->player.height);
 	game_info->goal.img = mlx_xpm_file_to_image(game_info->mlx_ptr, GOAL, &game_info->goal.width, &game_info->goal.height);
 	game_info->wall.img = mlx_xpm_file_to_image(game_info->mlx_ptr, WALL, &game_info->wall.width, &game_info->wall.height);
 	game_info->item.img = mlx_xpm_file_to_image(game_info->mlx_ptr, ITEM, &game_info->item.width, &game_info->item.height);
 	output_image_from_map(game_info);
-
-	// floor.addr = mlx_get_data_addr(floor.img, &floor.bits_per_pixel, &floor.line_length, &floor.endian);
-	// mlx_put_image_to_window(game_info->mlx_ptr, game_info->win_ptr, floor.img, 0, 0);
-	// mlx_put_image_to_window(game_info->mlx_ptr, game_info->win_ptr, floor.img, 25, 0);
-
 }
 
 void	output_image_from_map(t_game_info *game_info)
@@ -217,13 +196,6 @@ void	get_map_info(t_game_info *game_info)
 		i++;
 	}
 	game_info->map_y++;
-	
-}
-
-void	check_map(char *map)
-{
-	correct_char_num(map);
-
 }
 
 void	correct_char_num(char *map)
@@ -252,7 +224,7 @@ void	correct_char_num(char *map)
 		else if (map[i] == '1' || map[i] == '0')
 			(void)i;
 		else
-			map_error();
+			map_error("The characters that can be used are 0 1 C E P.\n");
 		i++;
 	}
 	if (c_count == 0 || e_count == 0 || p_count != 1 || nl_count < 2)
@@ -262,67 +234,22 @@ void	correct_char_num(char *map)
 	}
 }
 
-void	check_char(char c)
-{
-	char	*s;
-	size_t	i;
-	bool	is_in;
-
-	s = "10CEP\n";
-	i = 0;
-	is_in = false;
-	while (s[i])
-	{
-		if (c == s[i])
-			is_in = true;
-		i++;
-	}
-	if (!is_in)
-		map_error();
-}
-
-bool	is_rectangle(char *map)
-{
-	int		nl_count;
-	size_t	i;
-	size_t	first_row_x;
-
-	i = 0;
-	nl_count = 0;
-	while (map[i] != '\n')
-		i++;
-	first_row_x = i - 1;
-	i++;
-	// while ()
-	while (map[i] && map[i] != '\n')
-		;
-
-}
-
-bool	is_wall_around(char *map)
-{
-	size_t	i;
-
-	i = 0;
-	while (map[i] && map[i] != '\n')
-	{
-		if (map[i] != '1')
-			return (false);
-		i++;
-	}
-	if (map[i] && map[i + 1] && map[i + 1] != '1')
-		return (false);
-	while (map[i] && map[i] != '\n')
-		i++;
-	if (map[i] && map[i + 1] && map[i + 1] != '1')
-		return (false);
-}
-
 void	map_error(char *message)
 {
 	ft_printf("Error\n");
 	ft_printf("%s", message);
 	exit(EXIT_FAILURE);
+}
+
+void	is_valid_filename(char *map_path)
+{
+	char	*str_beginning_with_dot;
+
+	str_beginning_with_dot = ft_strchr(map_path, '.');
+	if (!str_beginning_with_dot)
+		map_error("The map path must end with \".ber\".\n");
+	if (ft_strncmp(str_beginning_with_dot, ".ber\0", 5))
+		map_error("The map path must end with \".ber\".\n");
 }
 
 // event系
