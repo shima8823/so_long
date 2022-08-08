@@ -6,23 +6,28 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/31 10:14:51 by shima             #+#    #+#             */
-/*   Updated: 2022/08/08 15:29:38 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/08 21:06:34 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/so_long.h"
 
-char	*read_file(char *map_path);
-void	when_error(char *error_func_name);
+char	*read_file(t_game_info *game_info);
 void	output_image_from_map(t_game_info *game_info);
 void	init_map(char *map_path, t_game_info *game_info);
 void	get_map_info(t_game_info *game_info);
-int		exit_program(t_game_info *game_info);
 void	check_map(char *map);
-void	map_error();
 void	check_char(char c);
 void	correct_char_num(char *map);
 void	is_valid_filename(char *map_path);
+void	nl_exist(int fd, bool *is_first_line, char *line, size_t *row_len);
+void	nl_not_exist(int fd, char *line, size_t row_len, bool *is_nl);
+bool	read_map(t_game_info *game_info, bool *is_first_line, bool *is_nl, size_t *row_len);
+
+// error
+void	when_error(int fd, char *error_func_name);
+void	map_error(int fd, char *message);
+int		exit_program(t_game_info *game_info);
 
 // event
 void	event_register(t_game_info *game_info);
@@ -45,92 +50,103 @@ int	main(int argc, char *argv[])
 	return (EXIT_SUCCESS);
 }
 
-char	*read_file(char *map_path)
+char	*read_file(t_game_info *game_info)
 {
-	int		fd;
-	char	*result;
-	char	*tmp;
-	int		nl_count;
-	size_t	row_len;
-	size_t	i;
-	char	*gnl_ret;
-	bool	is_first;
-	bool	is_nl;
+	bool			is_nl;
+	bool			is_first_line;
+	size_t			row_len;
 
-	result = malloc(1 * sizeof(char));
-	result[0] = '\0';
-	nl_count = 0;
-	i = 0;
-	is_first = true;
-	is_nl = true;
+	is_first_line = true;
 	row_len = 0;
-	
-	fd = open(map_path, O_RDONLY);
-	if (fd == -1)
-		when_error("open");
-
-	while (true)
-	{
-		gnl_ret = get_next_line(fd);
-		if (!gnl_ret)
-			break;
-		if (ft_strchr(gnl_ret, '\n'))
-		{
-			nl_count++;
-			if (is_first)
-			{
-				while (gnl_ret[i] != '\n')
-				{
-					if (gnl_ret[i] != '1')
-						map_error("The map must be closed by walls.124\n");
-					i++;
-				}
-				row_len = i;
-				is_first = false;
-			}
-			// printf("%zu", row_len);
-			if (row_len != ft_strlen(gnl_ret) - 1)
-				map_error("map is not rectangular.132\n");
-			if (gnl_ret[0] != '1' || gnl_ret[ft_strlen(gnl_ret) - 2] != '1')
-				map_error("The map must be closed by walls.135\n");
-		}
-		else
-		{
-			// ft_printf("%s, %d\n", __FILE__, __LINE__);
-			i = 0;
-			while (gnl_ret[i])
-			{
-				if (gnl_ret[i] != '1')
-					map_error("The map must be closed by walls.\n");
-				i++;
-			}
-			if (row_len != ft_strlen(gnl_ret))
-				map_error("map is not rectangular.146\n");
-			is_nl = false;
-		}
-		tmp = result;
-		result = ft_strjoin(result, gnl_ret);
-		if (result == NULL)
-			when_error("ft_strjoin");
-		free(tmp);
-		free(gnl_ret);
-	}
-	close(fd);
+	game_info->map = malloc(1 * sizeof(char));
+	if (!game_info->map)
+		when_error(game_info->fd, "malloc");
+	game_info->map[0] = '\0';
+	is_nl = true;
+	while (read_map(game_info, &is_first_line, &is_nl, &row_len))
+		;
+	if (errno != 0)
+		when_error(game_info->fd, "get_next_line");
+	if (is_first_line)
+		map_error(game_info->fd, "File may be missing content.\n");
 	if (is_nl)
-		map_error("nl\n");
-	if (nl_count < 2)
-		map_error("map has no more than 3 lines.\n");
-	return (result);
+		map_error(game_info->fd, "There may be many line breaks.\n");
+	close(game_info->fd);
+	return (game_info->map);
+}
+
+bool	read_map(t_game_info *game_info, bool *is_first_line, bool *is_nl, size_t *row_len)
+{
+	char	*line;
+	char	*tmp;
+
+	line = get_next_line(game_info->fd);
+	if (!line)
+		return (false) ;
+	if (ft_strchr(line, '\n'))
+		nl_exist(game_info->fd, is_first_line, line, row_len);
+	else
+		nl_not_exist(game_info->fd, line, *row_len, is_nl);
+	tmp = game_info->map;
+	game_info->map = ft_strjoin(game_info->map, line);
+	free(tmp);
+	free(line);
+	if (!game_info->map)
+		when_error(game_info->fd, "ft_strjoin");
+	return (true);
+}
+
+void	nl_exist(int fd, bool *is_first_line, char *line, size_t *row_len)
+{
+	size_t	i;
+	size_t	line_len;
+
+	i = 0;
+	if (*is_first_line)
+	{
+		while (line[i] != '\n')
+		{
+			if (line[i] != '1')
+				map_error(fd, "The map must be closed by walls.124\n");
+			i++;
+		}
+		*row_len = i;
+		*is_first_line = false;
+		return ;
+	}
+	line_len = ft_strlen(line);
+	if (*row_len != line_len - 1)
+		map_error(fd, "map is not rectangular.132\n");
+	if (line[0] != '1' || line[line_len - 2] != '1')
+		map_error(fd, "The map must be closed by walls.135\n");
+}
+
+void	nl_not_exist(int fd, char *line, size_t row_len, bool *is_nl)
+{
+	size_t	i;
+	
+	i = 0;
+	while (line[i])
+	{
+		if (line[i] != '1')
+			map_error(fd, "The map must be closed by walls.\n");
+		i++;
+	}
+	if (row_len != ft_strlen(line))
+		map_error(fd, "map is not rectangular.142\n");
+	*is_nl = false;
 }
 
 void	init_map(char *map_path, t_game_info *game_info)
 {
 	is_valid_filename(map_path);
-	game_info->map = read_file(map_path);
+	game_info->fd = open(map_path, O_RDONLY);
+	if (game_info->fd == -1)
+		when_error(0, "open");
+	game_info->map = read_file(game_info);
 	// ft_printf("%s", game_info->map);
 	correct_char_num(game_info->map);
 	get_map_info(game_info);
-	
 	game_info->mlx_ptr = mlx_init();
 	game_info->win_ptr = mlx_new_window(game_info->mlx_ptr, game_info->map_x * 50, game_info->map_y * 50, "so_long");
 	game_info->floor.img = mlx_xpm_file_to_image(game_info->mlx_ptr, FLOOR, &game_info->floor.width, &game_info->floor.height);
@@ -224,18 +240,23 @@ void	correct_char_num(char *map)
 		else if (map[i] == '1' || map[i] == '0')
 			(void)i;
 		else
-			map_error("The characters that can be used are 0 1 C E P.\n");
+			map_error(0, "The characters that can be used are 0 1 C E P.\n");
 		i++;
 	}
 	if (c_count == 0 || e_count == 0 || p_count != 1 || nl_count < 2)
 	{
 		free(map);
-		map_error("The map must contain at least 1 E, 1 C, and 1 P.\n");
+		if (nl_count < 2)
+			map_error(0, "map has no more than 3 lines.\n");
+		else
+			map_error(0, "The map must contain at least 1 E, 1 C, and 1 P.\n");
 	}
 }
 
-void	map_error(char *message)
+void	map_error(int fd, char *message)
 {
+	if (fd != 0)
+		close(fd);
 	ft_printf("Error\n");
 	ft_printf("%s", message);
 	exit(EXIT_FAILURE);
@@ -247,9 +268,9 @@ void	is_valid_filename(char *map_path)
 
 	str_beginning_with_dot = ft_strchr(map_path, '.');
 	if (!str_beginning_with_dot)
-		map_error("The map path must end with \".ber\".\n");
+		map_error(0, "The map path must end with \".ber\".\n");
 	if (ft_strncmp(str_beginning_with_dot, ".ber\0", 5))
-		map_error("The map path must end with \".ber\".\n");
+		map_error(0, "The map path must end with \".ber\".\n");
 }
 
 // event系
@@ -309,8 +330,10 @@ int	exit_program(t_game_info *game_info)
 	exit(EXIT_SUCCESS);
 }
 
-void	when_error(char *error_func_name)
+void	when_error(int fd, char *error_func_name)
 {
+	if (fd != 0)
+		close(fd);
 	perror(error_func_name);
 	exit(EXIT_FAILURE);
 }

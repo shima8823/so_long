@@ -6,7 +6,7 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/04 10:30:33 by shima             #+#    #+#             */
-/*   Updated: 2022/08/08 14:08:29 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/08 16:11:59 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,7 @@ typedef struct	s_data {
 typedef struct	s_game_info {
 	void			*mlx_ptr;
 	void			*win_ptr;
+	int				fd;
 	char			*map;
 	int				map_x;
 	int				map_y;
