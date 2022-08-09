@@ -1,8 +1,7 @@
-# CFLAGS = -Wall -Wextra -Werror
-CFLAGS = 
+CFLAGS = -Wall -Wextra -Werror
 CPPFLAGS = -I includes
 NAME = so_long
-SRCS = main.c get_next_line.c get_next_line_utils.c
+SRCS = get_next_line.c get_next_line_utils.c main.c read_file.c hook.c print_err.c check.c
 OBJ = $(addprefix $(OBJDIR)/, $(SRCS:%.c=%.o))
 OBJDIR = obj
 VPATH = srcs
