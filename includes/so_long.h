@@ -6,7 +6,7 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/04 10:30:33 by shima             #+#    #+#             */
-/*   Updated: 2022/08/09 14:55:29 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/15 11:02:54 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,7 +98,7 @@ void	get_map_info(t_game_info *game);
 // hook.c
 void	event_register(t_game_info *game);
 int		key_hook(int keycode, t_game_info *param);
-void	player_move(t_game_info *game, size_t other_i);
+void	player_move(t_game_info *game, size_t dst_i);
 int		loop_hook(t_game_info *param);
 int		exit_hook(t_game_info *game);
 //
@@ -110,7 +110,7 @@ void	map_error(int fd, char *message);
 
 // check.c
 void	correct_char_num(char *map);
-void	is_valid_filename(char *map_path);
+void	check_filename(char *map_path, t_game_info *game);
 void	count_char(t_char_count *cc, char c);
 //
 

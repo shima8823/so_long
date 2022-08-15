@@ -6,20 +6,23 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/09 13:20:21 by shima             #+#    #+#             */
-/*   Updated: 2022/08/09 14:51:56 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/15 11:05:24 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
 
-void	is_valid_filename(char *map_path)
+void	check_filename(char *map_path, t_game_info *game)
 {
 	char	*str_beginning_with_dot;
 
-	str_beginning_with_dot = ft_strchr(map_path, '.');
+	str_beginning_with_dot = ft_strrchr(map_path, '.');
 	if (!str_beginning_with_dot
 		|| ft_strncmp(str_beginning_with_dot, ".ber\0", 5))
 		map_error(0, "The map path must end with \".ber\".\n");
+	game->fd = open(map_path, O_RDONLY);
+	if (game->fd == -1)
+		when_error(0, "open");
 }
 
 void	correct_char_num(char *map)
@@ -37,7 +40,8 @@ void	correct_char_num(char *map)
 	if (cc.nl_count < 2)
 		map_error(0, "map has no more than 3 lines.\n");
 	if (cc.c_count <= 0 || cc.e_count <= 0 || cc.p_count != 1)
-		map_error(0, "The map must contain at least 1 E, 1 C, and 1 P.\n");
+		map_error(0,
+			"The map must contain at least 1 E, and 1 C, P must be 1.\n");
 }
 
 void	count_char(t_char_count *cc, char c)

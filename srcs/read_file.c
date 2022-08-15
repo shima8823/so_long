@@ -6,7 +6,7 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/09 12:59:20 by shima             #+#    #+#             */
-/*   Updated: 2022/08/09 14:47:59 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/13 07:28:01 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ void	nl_exist(int fd, bool *isfirst, char *line, size_t *row)
 	}
 	line_len = ft_strlen(line);
 	if (*row != line_len - 1)
-		map_error(fd, "map is not rectangular.132\n");
+		map_error(fd, "map is not rectangular.\n");
 	if (line[0] != '1' || line[line_len - 2] != '1')
 		map_error(fd, "The map must be closed by walls.\n");
 }

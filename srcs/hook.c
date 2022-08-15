@@ -6,7 +6,7 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/08/09 13:11:26 by shima             #+#    #+#             */
-/*   Updated: 2022/08/09 14:31:27 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/12 21:52:45 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,38 +21,38 @@ void	event_register(t_game_info *game)
 
 int	key_hook(int keycode, t_game_info *game)
 {
-	size_t	other_i;
+	size_t	dst_i;
 
-	other_i = 0;
+	dst_i = 0;
 	if (keycode == KEY_ESC)
 		exit_hook(game);
 	else if (keycode == KEY_W)
-		other_i = game->player_i - (game->map_x + 1);
+		dst_i = game->player_i - (game->map_x + 1);
 	else if (keycode == KEY_A)
-		other_i = game->player_i - 1;
+		dst_i = game->player_i - 1;
 	else if (keycode == KEY_S)
-		other_i = game->player_i + (game->map_x + 1);
+		dst_i = game->player_i + (game->map_x + 1);
 	else if (keycode == KEY_D)
-		other_i = game->player_i + 1;
+		dst_i = game->player_i + 1;
 	else
 		return (0);
-	player_move(game, other_i);
+	player_move(game, dst_i);
 	return (0);
 }
 
-void	player_move(t_game_info *game, size_t other_i)
+void	player_move(t_game_info *game, size_t dst_i)
 {
-	if (game->map[other_i] == '0' || game->map[other_i] == 'C')
+	if (game->map[dst_i] == '0' || game->map[dst_i] == 'C')
 	{
-		if (game->map[other_i] == 'C')
+		if (game->map[dst_i] == 'C')
 			game->item_count++;
-		game->map[other_i] = 'P';
+		game->map[dst_i] = 'P';
 		game->map[game->player_i] = '0';
-		game->player_i = other_i;
+		game->player_i = dst_i;
 		game->move_count++;
 		ft_printf("%u\n", game->move_count);
 	}
-	if (game->map[other_i] == 'E' && game->item_count == game->item_max)
+	if (game->map[dst_i] == 'E' && game->item_count == game->item_max)
 		exit_hook(game);
 }
 

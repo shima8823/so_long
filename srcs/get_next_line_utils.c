@@ -6,7 +6,7 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/03 10:31:54 by shima             #+#    #+#             */
-/*   Updated: 2022/08/08 10:49:06 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/15 10:58:50 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ char	*strjoin_until_c(char const *s1, char const *s2, char c)
 	size_t	s2_len;
 	size_t	i;
 
-	if (!s1 || !s2)
+	if (!s1 || !s2 || (s1[0] == '\0' && s2[0] == '\0'))
 		return (NULL);
 	s1_len = str_c_len(s1, c);
 	s2_len = str_c_len(s2, c);

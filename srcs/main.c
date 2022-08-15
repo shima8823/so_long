@@ -6,7 +6,7 @@
 /*   By: shima <shima@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/31 10:14:51 by shima             #+#    #+#             */
-/*   Updated: 2022/08/09 14:29:08 by shima            ###   ########.fr       */
+/*   Updated: 2022/08/12 21:58:04 by shima            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,10 +34,7 @@ int	main(int argc, char *argv[])
 
 static void	init_map(char *map_path, t_game_info *game)
 {
-	is_valid_filename(map_path);
-	game->fd = open(map_path, O_RDONLY);
-	if (game->fd == -1)
-		when_error(0, "open");
+	check_filename(map_path, game);
 	read_file(game);
 	correct_char_num(game->map);
 	get_map_info(game);
